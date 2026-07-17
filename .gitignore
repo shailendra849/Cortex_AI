@@ -1,0 +1,63 @@
+# ===== Dependencies =====
+node_modules/
+**/node_modules/
+
+# ===== Environment variables (all services) =====
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# ===== Secrets / credentials =====
+serviceAccount.json
+**/serviceAccount.json
+*.pem
+*.key
+
+# ===== Build output =====
+dist/
+dist-ssr/
+build/
+**/dist/
+**/build/
+
+# ===== Logs =====
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ===== Temp / uploads =====
+temp/
+tmp/
+**/temp/
+**/tmp/
+uploads/
+**/uploads/
+
+# ===== Editor / OS =====
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.local
+
+# ===== Docker =====
+docker-compose.override.yml
+
+# ===== Misc =====
+coverage/
+*.pid
+*.seed
+*.pid.lock
