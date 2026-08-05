@@ -2,7 +2,7 @@
 
 A multi-agent AI chat platform with a microservices backend. A LangGraph supervisor routes each user query to a specialized agent — chat, coding, web search, PDF generation, PPT generation, image generation, vision, or PDF-based RAG — instead of relying on a single general-purpose model for everything.
 
-**Live demo:** [your-live-url.com](https://your-live-url.com)
+**Live demo:** [live-url.com](https://your-live-url.com)
 
 ---
 
