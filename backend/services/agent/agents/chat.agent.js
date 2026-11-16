@@ -3,27 +3,31 @@ import { getMemory } from '../utils/memory.js';
 import { getModel } from '../utils/model.js';
 import { checkAgentLimit } from '../config/agentRateLimit.js';
 import { deductCredits } from '../utils/deductCredits.js';
+import { formatSearchResults } from '../utils/formatSearchResults.js';
 
 export const chatAgent = async (state) => {
   await checkAgentLimit(state.userId, 'chat');
 
-  await deductCredits(
-    state.userId,
-
-    'chat'
-  );
+  await deductCredits(state.userId, 'chat');
 
   const llm = getModel('chat');
 
   const history = await getMemory(state.conversationId);
 
-  const searchContext = state.searchResults
-    ? `
-Web Search Results:
+  const hasSearchResults = Boolean(state.searchResults);
+  const formattedSearch = hasSearchResults ? formatSearchResults(state.searchResults) : '';
 
-${state.searchResults}
+  const searchContext = hasSearchResults
+    ? `Live web search already ran for this request. Results:
 
-Answer the user using only the above search results.
+${formattedSearch}
+
+Instructions for search answers:
+- Use these results to answer the user.
+- Prefer concrete titles, links, and snippets from the results.
+- Never say you cannot browse/search the web for this request.
+- Do not mention internal tools or Tavily.
+- If results are weak/empty, say so briefly and suggest a sharper query.
 `
     : '';
 
@@ -33,13 +37,6 @@ Answer the user using only the above search results.
 You are CortexAI, an intelligent AI assistant.
 
 ${searchContext}
-
-
-
-If searchContext exists:
-
-- Use search results to answer.
-- Do not mention internal tools.
 
 Rules:
 
@@ -56,10 +53,6 @@ Formatting:
 - Keep paragraphs short and readable.
 - Never write headings and content on the same line.
 - Never generate large walls of text.
-
-
-
-
 `
     ),
   ];
@@ -82,8 +75,7 @@ Formatting:
 
   return {
     ...state,
-
     response: response.content,
-    images: images,
+    images,
   };
 };

@@ -73,15 +73,8 @@ export const verifyPayment = async (req, res) => {
     } = req.body;
 
     const generatedSignature = crypto
-
-      .createHmac(
-        'sha256',
-
-        process.env.RAZORPAY_KEY_SECRET
-      )
-
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-
       .digest('hex');
 
     if (generatedSignature !== razorpay_signature) {
@@ -105,14 +98,12 @@ export const verifyPayment = async (req, res) => {
     }
 
     payment.status = 'paid';
-
     payment.paymentId = razorpay_payment_id;
 
     await payment.save();
 
     await axios.patch(
       `${process.env.AUTH_SERVICE}/internal/update-plan`,
-
       {
         userId: payment.userId,
 

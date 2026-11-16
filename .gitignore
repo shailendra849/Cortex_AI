@@ -39,6 +39,8 @@ tmp/
 **/tmp/
 uploads/
 **/uploads/
+**/local-storage/
+backend/.minio/
 
 # ===== Editor / OS =====
 .vscode/*
@@ -61,3 +63,5 @@ coverage/
 *.pid
 *.seed
 *.pid.lock
+ENV_SETUP.md
+**/.env.example

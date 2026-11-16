@@ -7,11 +7,12 @@ import { getAuth, GithubAuthProvider, GoogleAuthProvider } from 'firebase/auth';
 // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  // authDomain: add your auth domain,
-  // projectId: add your project id,
-  // storageBucket: add your storage bucket,
-  // messagingSenderId: add your,
-  // appId: add your
+  authDomain: "rajwada-crm-fe2dc.firebaseapp.com",
+  projectId: "rajwada-crm-fe2dc",
+  storageBucket: "rajwada-crm-fe2dc.firebasestorage.app",
+  messagingSenderId: "47849386341",
+  appId: "1:47849386341:web:2cb78b84dc6e1c29e3f18c",
+  measurementId: "G-GXREWHYD1S"
 };
 
 // Initialize Firebase

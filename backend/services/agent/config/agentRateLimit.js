@@ -9,18 +9,20 @@ const LIMITS = {
   search: 5,
 };
 
+const INCREMENT_AND_TTL = `
+  local count = redis.call('INCR', KEYS[1])
+  if count == 1 then
+    redis.call('EXPIRE', KEYS[1], 60)
+  end
+  return { count, redis.call('TTL', KEYS[1]) }
+`;
+
 export const checkAgentLimit = async (userId, agent) => {
   const max = LIMITS[agent] ?? LIMITS.chat;
 
   const key = `rate:${agent}:${userId}`;
 
-  const count = await redis.incr(key);
-
-  if (count === 1) {
-    await redis.expire(key, 60);
-  }
-
-  const ttl = await redis.ttl(key);
+  const [count, ttl] = await redis.eval(INCREMENT_AND_TTL, 1, key);
 
   if (count > max) {
     const minutes = Math.floor(ttl / 60);

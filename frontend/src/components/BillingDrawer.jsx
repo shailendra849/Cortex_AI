@@ -11,6 +11,7 @@ export default function BillingDrawer({ open, onClose }) {
   const handleUpgrade = async (plan) => {
     try {
       const data = await createOrder(plan);
+      
 
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY,
@@ -73,7 +74,7 @@ export default function BillingDrawer({ open, onClose }) {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ duration: 0.25 }}
-            className="fixed right-0 top-0 z-50 h-screen w-[380px] bg-[#0f1117] border-l border-white/10 shadow-2xl flex flex-col"
+            className="fixed right-0 top-0 z-50 h-screen w-[380px] bg-zinc-950 border-l border-zinc-800 flex flex-col"
           >
             {/* Header */}
 
@@ -117,7 +118,7 @@ export default function BillingDrawer({ open, onClose }) {
 
                   <div className="h-2 rounded-full bg-white/10 overflow-hidden">
                     <div
-                      className="h-full bg-indigo-500 transition-all duration-500"
+                      className="h-full bg-teal-500 transition-all duration-500"
                       style={{
                         width: `${
                           ((userData?.credits || 0) / (userData?.totalCredits || 1)) * 100
@@ -137,12 +138,12 @@ export default function BillingDrawer({ open, onClose }) {
               <div className="rounded-xl border border-white/10 p-4">
                 <h3 className="text-white font-semibold">Starter</h3>
 
-                <p className="text-indigo-400 text-2xl font-bold mt-2">₹199</p>
+                <p className="text-teal-400 text-2xl font-bold mt-2">₹199</p>
 
                 <p className="text-slate-400 text-sm mt-1">500 Credits</p>
 
                 <button
-                  className="mt-4 w-full rounded-lg bg-indigo-600 hover:bg-indigo-700 py-2 text-white"
+                  className="mt-4 w-full rounded-lg bg-teal-600 hover:bg-teal-500 py-2 text-white"
                   onClick={() => handleUpgrade('starter')}
                 >
                   Upgrade
@@ -151,8 +152,8 @@ export default function BillingDrawer({ open, onClose }) {
 
               {/* Pro */}
 
-              <div className="rounded-xl border border-indigo-500 p-4 relative">
-                <span className="absolute right-3 top-3 text-xs bg-indigo-600 px-2 py-1 rounded-full text-white">
+              <div className="rounded-xl border border-teal-500/40 p-4 relative">
+                <span className="absolute right-3 top-3 text-xs bg-teal-600 px-2 py-1 rounded-full text-white">
                   Popular
                 </span>
 
@@ -161,12 +162,12 @@ export default function BillingDrawer({ open, onClose }) {
                   <Zap size={16} className="text-yellow-400" />
                 </h3>
 
-                <p className="text-indigo-400 text-2xl font-bold mt-2">₹499</p>
+                <p className="text-teal-400 text-2xl font-bold mt-2">₹499</p>
 
                 <p className="text-slate-400 text-sm mt-1">1000 Credits</p>
 
                 <button
-                  className="mt-4 w-full rounded-lg bg-indigo-600 hover:bg-indigo-700 py-2 text-white"
+                  className="mt-4 w-full rounded-lg bg-teal-600 hover:bg-teal-500 py-2 text-white"
                   onClick={() => handleUpgrade('pro')}
                 >
                   Upgrade

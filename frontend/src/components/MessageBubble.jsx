@@ -4,10 +4,13 @@ import remarkGfm from 'remark-gfm';
 import { FiExternalLink, FiX } from 'react-icons/fi';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, FileText } from 'lucide-react';
+import { useDispatch } from 'react-redux';
+import { setArtifacts } from '../redux/message.slice';
 
-function MessageBubble({ role, content, images }) {
+function MessageBubble({ role, content, images, attachments = [] }) {
   const isUser = role === 'user';
+  const dispatch = useDispatch();
   const [lightboxSrc, setLightboxSrc] = useState(null);
   const [copiedCode, setCopiedCode] = useState('');
   const copyCode = async (code) => {
@@ -20,6 +23,26 @@ function MessageBubble({ role, content, images }) {
     }, 2000);
   };
 
+  const formatSize = (size) => {
+    if (!size && size !== 0) return '';
+    if (size < 1024) return `${size} B`;
+    return `${Math.ceil(size / 1024)} KB`;
+  };
+
+  const openPdfPreview = (file) => {
+    if (file.mimeType !== 'application/pdf') return;
+    dispatch(
+      setArtifacts([
+        {
+          id: Date.now(),
+          type: 'pdf',
+          title: file.name,
+          url: file.url || file.previewUrl || null,
+        },
+      ])
+    );
+  };
+
   const markdown = (content || '')
     .replace(/```review/gi, '```')
     .replace(/```text/gi, '```')
@@ -28,15 +51,38 @@ function MessageBubble({ role, content, images }) {
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div
         className={`w-fit max-w-[92vw] md:max-w-[72%]
-  px-4 py-2.5 rounded-2xl
-  break-words overflow-hidden
-  leading-relaxed
+          px-4 py-2.5 rounded-2xl
+          break-words overflow-hidden
+         leading-relaxed
         ${
           isUser
-            ? 'bg-gradient-to-br from-indigo-500 to-violet-700 text-white rounded-tr-sm'
-            : ' text-slate-200 rounded-tl-sm'
+            ? 'bg-zinc-800 text-zinc-100 rounded-tr-sm'
+            : ' text-zinc-200 rounded-tl-sm'
         }`}
       >
+        {attachments?.length > 0 && (
+          <div className="flex flex-col gap-2 mb-2.5">
+            {attachments.map((file, i) => (
+              <button
+                key={`${file.name}-${i}`}
+                type="button"
+                onClick={() => openPdfPreview(file)}
+                className="inline-flex items-center gap-2.5 rounded-xl border border-zinc-700 bg-zinc-900/80 px-3 py-2 max-w-full text-left cursor-pointer hover:border-teal-500/40 hover:bg-zinc-900 transition-colors"
+              >
+                <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-zinc-800 shrink-0">
+                  <FileText size={16} className="text-red-400" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[12.5px] font-medium text-zinc-100 truncate">{file.name}</p>
+                  <p className="text-[10.5px] text-zinc-500">
+                    {file.mimeType === 'application/pdf' ? 'PDF · Click to preview' : file.mimeType || 'File'}
+                    {file.size ? ` · ${formatSize(file.size)}` : ''}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
         {images.length > 0 && (
           <div className="flex flex-wrap gap-3 mt-4">
             {images.map((img, i) => (
@@ -83,7 +129,7 @@ function MessageBubble({ role, content, images }) {
                 href={href}
                 target="_blank"
                 rel="noreferrer"
-                className="text-indigo-400 underline inline-flex items-center gap-1"
+                className="text-teal-400 underline inline-flex items-center gap-1"
               >
                 {children}
                 <FiExternalLink size={11} />
@@ -160,7 +206,7 @@ function MessageBubble({ role, content, images }) {
               );
             },
           }}
-        >
+         >
           {markdown}
         </ReactMarkdown>
       </div>

@@ -2,4 +2,23 @@ services:
   redis:
     image: redis
     ports:
-      - '6379:6379'
+      - '6380:6379'
+
+  # Lightweight free S3 API mock (use when Docker Desktop is running).
+  # Agent .env:
+  #   STORAGE_PROVIDER=s3
+  #   AWS_ACCESS_KEY_ID=test
+  #   AWS_SECRET_ACCESS_KEY=test
+  #   AWS_REGION=us-east-1
+  #   S3_BUCKET_NAME=cortex
+  #   AWS_ENDPOINT=http://127.0.0.1:9090
+  # Then create bucket once: AWS CLI or any S3 client against localhost:9090
+  s3mock:
+    profiles: ['s3']
+    image: adobe/s3mock:3.12.0
+    ports:
+      - '9090:9090'
+    environment:
+      initialBuckets: cortex
+
+volumes: {}

@@ -1,4 +1,5 @@
 import Conversation from '../models/conversation.model.js';
+import Message from '../models/message.model.js';
 
 export const createConversation = async (req, res) => {
   try {
@@ -33,18 +34,18 @@ export const getConversations = async (req, res) => {
   }
 };
 
-import Message from '../models/message.model.js';
+
 
 export const saveMessage = async (req, res) => {
   try {
-    const { conversationId, role, content, images, artifacts } = req.body;
+    const { conversationId, role, content, images, artifacts, attachments } = req.body;
 
     const message = await Message.create({
       conversationId,
-
       role,
       images,
       content,
+      attachments: attachments || [],
       artifacts: artifacts || [],
     });
 

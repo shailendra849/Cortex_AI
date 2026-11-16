@@ -1,8 +1,7 @@
 import PDFDocument from 'pdfkit';
 import { getModel } from '../utils/model.js';
 
-import { uploadToS3 } from '../utils/uploadToS3.js';
-import { getDownloadUrl } from '../utils/getDownloadUrl.js';
+import { uploadToStorage, getDownloadUrl } from '../utils/storage.js';
 import { checkAgentLimit } from '../config/agentRateLimit.js';
 import { deductCredits } from '../utils/deductCredits.js';
 
@@ -108,7 +107,7 @@ Rules:
 
     const pdfBuffer = Buffer.concat(chunks);
 
-    await uploadToS3(pdfBuffer, fileName, 'application/pdf');
+    await uploadToStorage(pdfBuffer, fileName, 'application/pdf');
 
     const downloadUrl = await getDownloadUrl(fileName, 24 * 60 * 60);
 
@@ -122,7 +121,7 @@ Rules:
 
 📥 [Download PDF](${downloadUrl})
 
-⏳ Link expires in 10 minutes.
+⏳ Link expires in 24 hours.
 `.trim(),
     };
   } catch (error) {

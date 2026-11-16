@@ -1,0 +1,46 @@
+CloudDesk Helpdesk Software
+Product Knowledge Base & Support Guide
+
+CloudDesk is a cloud-based helpdesk and ticketing platform for SaaS support teams.
+It helps companies manage customer tickets, SLAs, knowledge articles, and AI-assisted replies.
+
+## Core Features
+- Omnichannel inbox for email, chat, and WhatsApp tickets
+- SLA policies with business-hour calendars
+- Knowledge base with versioned articles
+- AI Copilot that drafts replies using approved articles only
+- Role-based access for agents, leads, and admins
+- Analytics for first response time, resolution time, and CSAT
+
+## Pricing Plans
+- Starter: 3 agents, 500 tickets/month, email support, $49/month
+- Growth: 10 agents, 5,000 tickets/month, chat + WhatsApp, $149/month
+- Scale: unlimited agents, custom ticket volume, SSO + audit logs, $399/month
+Annual billing gives a 20% discount on all plans.
+
+## SLA Targets
+- Starter: first response in 8 business hours, resolution in 48 hours
+- Growth: first response in 2 business hours, resolution in 24 hours
+- Scale: first response in 30 minutes, resolution in 8 hours for P1 issues
+
+## Integrations
+CloudDesk integrates with Slack, Jira, HubSpot, Zendesk Migrate, and Stripe billing webhooks.
+Webhooks can notify external systems when a ticket is created, assigned, or resolved.
+
+## Security
+- Data encrypted at rest with AES-256 and in transit with TLS 1.2+
+- SOC 2 Type II controls are documented for enterprise customers
+- Admins can enforce SSO via Google Workspace or Okta
+- Ticket attachments are scanned and stored in isolated object storage
+
+## AI Copilot Rules
+- Answers must cite knowledge-base article IDs
+- Copilot never invents refund policy details
+- Refunds above $200 require lead approval
+- Password reset links expire in 30 minutes
+
+## Support Contacts
+- Product support email: support@clouddesk.example
+- Security contact: security@clouddesk.example
+- Status page: status.clouddesk.example
+- On-call escalation for Scale plan customers: +1-555-0142

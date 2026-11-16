@@ -1,17 +1,12 @@
 import axios from 'axios';
 
-export const deductCredits = async (
-  userId,
-
-  agent
-) => {
+export const deductCredits = async (userId,agent) => {
   try {
     await axios.patch(
       `${process.env.AUTH_SERVICE}/internal/deduct-credits`,
 
       {
         userId,
-
         agent,
       }
     );

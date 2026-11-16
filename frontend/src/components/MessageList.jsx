@@ -11,7 +11,7 @@ function NeuralPulse() {
       {[0, 0.45, 0.9].map((delay, i) => (
         <motion.span
           key={i}
-          className="absolute inset-0 rounded-full border border-cyan-400/30"
+          className="absolute inset-0 rounded-full border border-teal-400/30"
           initial={{ scale: 0.3, opacity: 0.55 }}
           animate={{ scale: 1.7, opacity: 0 }}
           transition={{
@@ -23,8 +23,7 @@ function NeuralPulse() {
         />
       ))}
       <motion.span
-        className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-cyan-300 to-violet-400"
-        style={{ boxShadow: '0 0 14px rgba(125,211,252,0.55)' }}
+        className="w-2.5 h-2.5 rounded-full bg-teal-400"
         animate={{ scale: [1, 1.25, 1] }}
         transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
       />
@@ -96,9 +95,10 @@ export default function MessageList() {
     });
   }, [messages.length, isLoading]);
   useEffect(() => {
+    if (!selectedConversation?._id) return;
     if (selectedConversation?.title === 'New Chat') return;
     const get = async () => {
-      const data = await getMessages(selectedConversation?._id);
+      const data = await getMessages(selectedConversation._id);
       dispatch(setMessages(data));
       const latestArtifactMessage = [...data]
         .reverse()
@@ -144,7 +144,12 @@ export default function MessageList() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.22, ease: 'easeOut' }}
             >
-              <MessageBubble role={msg.role} content={msg.content} images={msg?.images || []} />
+              <MessageBubble
+                role={msg.role}
+                content={msg.content}
+                images={msg?.images || []}
+                attachments={msg?.attachments || []}
+              />
             </motion.div>
           ))}
 

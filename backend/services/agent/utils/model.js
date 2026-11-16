@@ -5,19 +5,20 @@ dotenv.config();
 import { ChatOpenRouter } from '@langchain/openrouter';
 
 const openRouter = new ChatOpenRouter({
-  model: 'deepseek/deepseek-chat',
+  model: process.env.OPENROUTER_MODEL || 'deepseek/deepseek-chat',
   temperature: 0,
   maxTokens: 2500,
   // other params...
 });
 
 export const gemini = new ChatGoogleGenerativeAI({
-  model: 'gemini-2.5-flash',
+  model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
   apiKey: process.env.GOOGLE_API_KEY,
 });
 
 const groq = new ChatGroq({
-  model: 'llama-3.3-70b-versatile',
+  model: process.env.GROQ_MODEL || 'openai/gpt-oss-120b',
+  apiKey: process.env.GROQ_API_KEY,
   temperature: 0,
   maxTokens: undefined,
   maxRetries: 2,

@@ -13,7 +13,12 @@ import {
   X,
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { addMessage, setArtifacts, setIsLoading } from '../redux/message.slice';
+import {
+  addMessage,
+  patchLastUserAttachments,
+  setArtifacts,
+  setIsLoading,
+} from '../redux/message.slice';
 import { sendPrompt } from '../features/agent.api';
 import { Mic, MicOff } from 'lucide-react';
 import { useEffect } from 'react';
@@ -24,6 +29,7 @@ import {
   setSelectedConversation,
 } from '../redux/conversation.slice';
 import { useRef } from 'react';
+import { saveSelectedConversationId } from '../utils/conversationPersist';
 
 export default function ChatInput({ setBanner }) {
   const [selectedAgent, setSelectedAgent] = useState('auto');
@@ -40,19 +46,20 @@ export default function ChatInput({ setBanner }) {
 
   const placeholders = {
     auto: 'Ask CortexAI...',
-
     chat: 'Chat with CortexAI...',
-
     coding: 'Describe the software you want...',
-
     pdf: 'Generate a PDF about...',
-
     ppt: 'Create a presentation about...',
-
     image: 'Describe the image...',
-
     search: 'Search the web...',
   };
+
+  const inputPlaceholder =
+    selectedFile?.type === 'application/pdf'
+      ? 'Ask anything about this PDF (or just send it for a summary)...'
+      : selectedFile?.type?.startsWith('image/')
+        ? 'Ask a question about this image...'
+        : placeholders[selectedAgent];
 
   const agents = [
     {
@@ -60,37 +67,31 @@ export default function ChatInput({ setBanner }) {
       icon: Zap,
       label: 'Auto',
     },
-
     {
       id: 'chat',
       icon: MessageSquare,
       label: 'Chat',
     },
-
     {
       id: 'coding',
       icon: Code2,
       label: 'Coding',
     },
-
     {
       id: 'pdf',
       icon: FileText,
       label: 'PDF',
     },
-
     {
       id: 'ppt',
       icon: Presentation,
       label: 'PPT',
     },
-
     {
       id: 'image',
       icon: ImageIcon,
       label: 'Image',
     },
-
     {
       id: 'search',
       icon: Globe,
@@ -106,9 +107,7 @@ export default function ChatInput({ setBanner }) {
     const recognition = new SpeechRecognition();
 
     recognition.lang = 'en-IN';
-
     recognition.interimResults = true;
-
     recognition.continuous = true;
 
     recognition.onresult = (event) => {
@@ -131,24 +130,29 @@ export default function ChatInput({ setBanner }) {
   const toggleMic = () => {
     if (!recognitionRef.current) {
       alert('Speech Recognition not supported');
-
       return;
     }
 
     if (isListening) {
       recognitionRef.current.stop();
-
       setIsListening(false);
     } else {
       recognitionRef.current.start();
-
       setIsListening(true);
     }
   };
 
   const handleSend = async () => {
     const prompt = value.trim();
-    if (!prompt) return;
+    if (!prompt && !selectedFile) return;
+
+    const outgoingPrompt =
+      prompt ||
+      (selectedFile?.type === 'application/pdf'
+        ? 'Please review this PDF.'
+        : selectedFile?.type?.startsWith('image/')
+          ? 'Please review this image.'
+          : 'Please review this file.');
 
     dispatch(setIsLoading(true));
 
@@ -159,23 +163,40 @@ export default function ChatInput({ setBanner }) {
         const newConversation = await createConversation();
         dispatch(addConversation(newConversation));
         dispatch(setSelectedConversation(newConversation));
+        saveSelectedConversationId(newConversation._id);
         conversation = newConversation;
+      } else {
+        saveSelectedConversationId(conversation._id);
       }
 
       if (conversation.title === 'New Chat') {
-        await updateConversations(conversation._id, prompt.slice(0, 40));
-        dispatch(setConvTitle({ conversationId: conversation._id, title: prompt.slice(0, 40) }));
+        const titleSeed = prompt || selectedFile?.name || 'New Chat';
+        await updateConversations(conversation._id, titleSeed.slice(0, 40));
+        dispatch(setConvTitle({ conversationId: conversation._id, title: titleSeed.slice(0, 40) }));
       }
 
-      dispatch(addMessage({ role: 'user', content: prompt }));
+      const previewUrl =
+        selectedFile?.type === 'application/pdf' ? URL.createObjectURL(selectedFile) : null;
+
+      const attachments = selectedFile
+        ? [
+            {
+              name: selectedFile.name,
+              mimeType: selectedFile.type,
+              size: selectedFile.size,
+              previewUrl,
+            },
+          ]
+        : [];
+
+      dispatch(addMessage({ role: 'user', content: outgoingPrompt, attachments }));
+
       setValue('');
 
       const formData = new FormData();
 
       formData.append('conversationId', conversation._id);
-
-      formData.append('prompt', prompt);
-
+      formData.append('prompt', outgoingPrompt);
       formData.append('agent', selectedAgent);
 
       if (selectedFile) {
@@ -186,6 +207,11 @@ export default function ChatInput({ setBanner }) {
 
       const data = await sendPrompt(formData);
       console.log(data);
+
+      if (data.attachments?.length) {
+        dispatch(patchLastUserAttachments(data.attachments));
+      }
+
       dispatch(
         addMessage({
           role: 'assistant',
@@ -194,17 +220,14 @@ export default function ChatInput({ setBanner }) {
         })
       );
 
-      console.log(data);
-
-      if (data.artifacts) {
+      // Only open side panel for real code/PPT artifacts — PDF opens on click.
+      if (data.artifacts?.length) {
         dispatch(setArtifacts(data.artifacts));
       }
     } catch (error) {
       setBanner({
         open: true,
-
         title: error.response?.data?.title || 'Something went wrong',
-
         message: error.response?.data?.message || 'Please try again.',
       });
     } finally {
@@ -212,9 +235,18 @@ export default function ChatInput({ setBanner }) {
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (!isLoading && (value.trim() || selectedFile)) {
+        handleSend();
+      }
+    }
+  };
+
   return (
-    <div className="w-full overflow-hidden px-3 md:px-5 py-4 border-t border-white/[0.06] bg-[#0d0f14]">
-      <div className="flex flex-col gap-2 bg-white/[0.03] border border-white/[0.07] rounded-2xl px-4 pt-3.5 pb-3">
+    <div className="w-full overflow-hidden px-3 md:px-5 py-4 border-t border-zinc-800 bg-zinc-950">
+      <div className="flex flex-col gap-2 bg-zinc-900/60 border border-zinc-800 rounded-2xl px-4 pt-3.5 pb-3">
         <div className="flex w-[80%] gap-2 pr-2 flex-wrap">
           {agents.map((agent) => {
             const Icon = agent.icon;
@@ -225,28 +257,26 @@ export default function ChatInput({ setBanner }) {
                 key={agent.id}
                 onClick={() => setSelectedAgent(agent.id)}
                 className={`
-            flex-shrink-0
-            
-            inline-flex
-            items-center
-            gap-1.5
-            px-3
-            py-2
-            rounded-full
-            text-xs
-            font-medium
-            border
-            transition-all
-
-            ${
-              isActive
-                ? 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white border-transparent shadow-[0_1px_8px_rgba(99,102,241,.35)]'
-                : 'bg-white/[0.03] text-slate-400 border-white/[0.06] hover:bg-white/[0.07]'
-            }
-          `}
+                  flex-shrink-0
+                  cursor-pointer
+                  inline-flex
+                  items-center
+                  gap-1.5
+                  px-3
+                  py-2
+                  rounded-full
+                  text-xs
+                  font-medium
+                  border
+                  transition-colors
+                  ${
+                    isActive
+                      ? 'bg-teal-600 text-white border-teal-600'
+                      : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:bg-zinc-800 hover:text-zinc-200'
+                  }
+                `}
               >
-                <Icon size={14} className={isActive ? 'text-white' : 'text-slate-500'} />
-
+                <Icon size={14} className={isActive ? 'text-white' : 'text-zinc-500'} />
                 {agent.label}
               </button>
             );
@@ -257,44 +287,32 @@ export default function ChatInput({ setBanner }) {
           <div className="my-3">
             <div className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
               {selectedFile.type === 'application/pdf' ? (
-                <FileText
-                  size={16}
-
-                  className="text-red-400"
-                />
+                <FileText size={16} className="text-red-400" />
               ) : (
                 selectedFile?.type.startsWith('image/') && (
                   <img
                     src={URL.createObjectURL(selectedFile)}
-
                     className="h-10 w-10 rounded-xl object-cover mt-3"
+                    alt="preview"
                   />
                 )
               )}
 
               <div>
                 <p className="text-xs text-white">{selectedFile.name}</p>
-
                 <p className="text-[10px] text-slate-500">
-                  {Math.ceil(selectedFile.size / 1024)}
-                  KB
+                  {Math.ceil(selectedFile.size / 1024)} KB
                 </p>
               </div>
 
               <button
                 onClick={() => {
                   setSelectedFile(null);
-
                   fileRef.current.value = '';
                 }}
-
                 className="ml-2"
               >
-                <X
-                  size={14}
-
-                  className="text-slate-500 hover:text-white"
-                />
+                <X size={14} className="text-slate-500 hover:text-white" />
               </button>
             </div>
           </div>
@@ -304,10 +322,11 @@ export default function ChatInput({ setBanner }) {
         <textarea
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder={placeholders[selectedAgent]}
+          onKeyDown={handleKeyDown}
+          placeholder={inputPlaceholder}
           rows={3}
           disabled={isLoading}
-          className="w-full bg-transparent outline-none resize-none text-[14px] text-slate-200 placeholder:text-slate-600 leading-relaxed [scrollbar-width:none] [&::-webkit-scrollbar]:hidden disabled:opacity-50"
+          className="w-full bg-transparent outline-none resize-none text-[14px] text-zinc-200 placeholder:text-zinc-600 leading-relaxed [scrollbar-width:none] [&::-webkit-scrollbar]:hidden disabled:opacity-50"
         />
 
         {/* Bottom row */}
@@ -316,51 +335,35 @@ export default function ChatInput({ setBanner }) {
           <div className="flex items-center gap-1">
             <input
               ref={fileRef}
-
               type="file"
-
               hidden
-
               accept=".pdf,image/*"
-
               onChange={(e) => {
                 const file = e.target.files[0];
-
                 if (file) {
                   setSelectedFile(file);
                 }
               }}
             />
             <button
-              className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 hover:text-slate-400 hover:bg-white/[0.05] border border-transparent hover:border-white/[0.06] transition-all duration-150 bg-transparent cursor-pointer"
+              className="flex items-center justify-center w-8 h-8 rounded-lg text-zinc-600 hover:text-zinc-400 hover:bg-zinc-800 border border-transparent hover:border-zinc-700 transition-all duration-150 bg-transparent cursor-pointer"
               onClick={() => fileRef.current.click()}
             >
               <Paperclip size={14} />
             </button>
             <button
               onClick={toggleMic}
-
               className={`
-
-flex
-
-items-center
-
-justify-center
-
-w-8
-
-h-8
-
-rounded-lg
-
-transition-all
-
-cursor-pointer
-
-${isListening ? 'bg-red-500 text-white' : 'text-slate-600 hover:bg-white/[0.05]'}
-
-`}
+                flex
+                items-center
+                justify-center
+                w-8
+                h-8
+                rounded-lg
+                transition-all
+                cursor-pointer
+                ${isListening ? 'bg-red-500 text-white' : 'text-zinc-600 hover:bg-zinc-800'}
+              `}
             >
               {isListening ? <MicOff size={14} /> : <Mic size={14} />}
             </button>
@@ -369,14 +372,14 @@ ${isListening ? 'bg-red-500 text-white' : 'text-slate-600 hover:bg-white/[0.05]'
           {/* Right — send / stop */}
           <button
             onClick={handleSend}
-            disabled={!isLoading && !value.trim()}
-            className={`flex items-center justify-center w-8 h-8 rounded-lg border-none cursor-pointer transition-all duration-150
+            disabled={!isLoading && !value.trim() && !selectedFile}
+            className={`flex items-center justify-center w-8 h-8 rounded-lg border-none cursor-pointer transition-colors duration-150
               ${
                 isLoading
-                  ? 'bg-white text-[#0d0f14] hover:bg-slate-200'
-                  : value.trim()
-                    ? 'bg-gradient-to-br from-indigo-500 to-violet-700 hover:opacity-90 text-white'
-                    : 'bg-white/[0.05] text-slate-600 cursor-not-allowed'
+                  ? 'bg-zinc-100 text-zinc-950 hover:bg-white'
+                  : value.trim() || selectedFile
+                    ? 'bg-teal-600 hover:bg-teal-500 text-white'
+                    : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
               }`}
           >
             {isLoading ? <Square size={12} fill="currentColor" /> : <Send size={14} />}
@@ -384,7 +387,7 @@ ${isListening ? 'bg-red-500 text-white' : 'text-slate-600 hover:bg-white/[0.05]'
         </div>
       </div>
 
-      <p className="text-center text-[10.5px] text-slate-700 mt-2.5">
+      <p className="text-center text-[10.5px] text-zinc-600 mt-2.5">
         CortexAI can make mistakes. Verify important info.
       </p>
     </div>

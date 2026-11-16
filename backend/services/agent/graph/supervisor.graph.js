@@ -27,10 +27,15 @@ workflow.addNode('coding', codingAgent);
 workflow.addNode('search', searchAgent);
 
 workflow.addNode('pdf', pdfAgent);
+
 workflow.addNode('ppt', pptAgent);
+
 workflow.addNode('image', imageAgent);
+
 workflow.addNode('vision', visionAgent);
+
 workflow.addNode('pdf_rag', pdfRagAgent);
+
 workflow.addEdge('__start__', 'router');
 
 workflow.addConditionalEdges(
